@@ -12,13 +12,11 @@ const taskUpdateSchema = z.object({
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
-  const id = params.id;
-  
   try {
     const task = await prisma.task.findUnique({
-      where: { id },
+      where: { id: context.params.id },
     });
 
     if (!task) {
@@ -40,10 +38,8 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
-  const id = params.id;
-  
   try {
     const body = await request.json();
     const validatedData = taskUpdateSchema.parse(body);
@@ -55,7 +51,7 @@ export async function PATCH(
     };
 
     const updatedTask = await prisma.task.update({
-      where: { id },
+      where: { id: context.params.id },
       data: updateData,
     });
 
@@ -77,13 +73,11 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
-  const id = params.id;
-  
   try {
     await prisma.task.delete({
-      where: { id },
+      where: { id: context.params.id },
     });
 
     return NextResponse.json({ message: 'Task deleted successfully' });
