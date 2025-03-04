@@ -1,25 +1,24 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 const taskUpdateSchema = z.object({
-  title: z.string().min(1).optional(),
+  title: z.string().optional(),
   description: z.string().optional(),
   status: z.enum(['TODO', 'IN_PROGRESS', 'DONE']).optional(),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH']).optional(),
   dueDate: z.string().optional(),
-  metadata: z.record(z.union([z.string(), z.number(), z.boolean(), z.null()])).optional(),
 });
 
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
+  const id = params.id;
+  
   try {
     const task = await prisma.task.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!task) {
@@ -31,7 +30,7 @@ export async function GET(
 
     return NextResponse.json(task);
   } catch (error) {
-    console.error('Failed to fetch task:', error);
+    console.error('Error fetching task:', error);
     return NextResponse.json(
       { error: 'Failed to fetch task' },
       { status: 500 }
@@ -43,28 +42,32 @@ export async function PATCH(
   request: Request,
   { params }: { params: { id: string } }
 ) {
+  const id = params.id;
+  
   try {
-    const json = await request.json();
-    const validatedData = taskUpdateSchema.parse(json);
+    const body = await request.json();
+    const validatedData = taskUpdateSchema.parse(body);
 
-    const task = await prisma.task.update({
-      where: { id: params.id },
-      data: {
-        ...validatedData,
-        dueDate: validatedData.dueDate ? new Date(validatedData.dueDate) : undefined,
-      },
+    // Convert dueDate string to Date if present
+    const updateData = {
+      ...validatedData,
+      dueDate: validatedData.dueDate ? new Date(validatedData.dueDate) : undefined,
+    };
+
+    const updatedTask = await prisma.task.update({
+      where: { id },
+      data: updateData,
     });
 
-    return NextResponse.json(task);
+    return NextResponse.json(updatedTask);
   } catch (error) {
+    console.error('Error updating task:', error);
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: 'Invalid task data', details: error.errors },
         { status: 400 }
       );
     }
-
-    console.error('Failed to update task:', error);
     return NextResponse.json(
       { error: 'Failed to update task' },
       { status: 500 }
@@ -76,14 +79,16 @@ export async function DELETE(
   request: Request,
   { params }: { params: { id: string } }
 ) {
+  const id = params.id;
+  
   try {
     await prisma.task.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
-    return new NextResponse(null, { status: 204 });
+    return NextResponse.json({ message: 'Task deleted successfully' });
   } catch (error) {
-    console.error('Failed to delete task:', error);
+    console.error('Error deleting task:', error);
     return NextResponse.json(
       { error: 'Failed to delete task' },
       { status: 500 }

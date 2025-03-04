@@ -1,13 +1,22 @@
-import { Task } from '@/models/task';
+export interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  status: 'TODO' | 'IN_PROGRESS' | 'DONE';
+  priority: 'LOW' | 'MEDIUM' | 'HIGH';
+  dueDate?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 export class TaskService {
   static async fetchTasks(): Promise<Task[]> {
     const response = await fetch('/api/tasks');
     if (!response.ok) {
-      throw new Error('Failed to fetch tasks');
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch tasks');
     }
-    const data = await response.json();
-    return data.map((task: any) => Task.fromJSON(task));
+    return response.json();
   }
 
   static async createTask(taskData: Partial<Task>): Promise<Task> {
@@ -20,15 +29,15 @@ export class TaskService {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to create task');
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to create task');
     }
 
-    const data = await response.json();
-    return Task.fromJSON(data);
+    return response.json();
   }
 
-  static async updateTask(taskId: string, taskData: Partial<Task>): Promise<Task> {
-    const response = await fetch(`/api/tasks/${taskId}`, {
+  static async updateTask(id: string, taskData: Partial<Task>): Promise<Task> {
+    const response = await fetch(`/api/tasks/${id}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -37,20 +46,21 @@ export class TaskService {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to update task');
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to update task');
     }
 
-    const data = await response.json();
-    return Task.fromJSON(data);
+    return response.json();
   }
 
-  static async deleteTask(taskId: string): Promise<void> {
-    const response = await fetch(`/api/tasks/${taskId}`, {
+  static async deleteTask(id: string): Promise<void> {
+    const response = await fetch(`/api/tasks/${id}`, {
       method: 'DELETE',
     });
 
     if (!response.ok) {
-      throw new Error('Failed to delete task');
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to delete task');
     }
   }
 } 
