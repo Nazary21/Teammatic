@@ -10,13 +10,23 @@ const taskUpdateSchema = z.object({
   dueDate: z.string().optional(),
 });
 
+type RouteContext = {
+  params: {
+    id: string;
+  };
+};
+
 export async function GET(
   request: Request,
-  context: { params: { id: string } }
+  { params }: RouteContext
 ) {
+  if (!params?.id) {
+    return NextResponse.json({ error: 'Task ID is required' }, { status: 400 });
+  }
+
   try {
     const task = await prisma.task.findUnique({
-      where: { id: context.params.id },
+      where: { id: params.id },
     });
 
     if (!task) {
@@ -38,20 +48,23 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  context: { params: { id: string } }
+  { params }: RouteContext
 ) {
+  if (!params?.id) {
+    return NextResponse.json({ error: 'Task ID is required' }, { status: 400 });
+  }
+
   try {
     const body = await request.json();
     const validatedData = taskUpdateSchema.parse(body);
 
-    // Convert dueDate string to Date if present
     const updateData = {
       ...validatedData,
       dueDate: validatedData.dueDate ? new Date(validatedData.dueDate) : undefined,
     };
 
     const updatedTask = await prisma.task.update({
-      where: { id: context.params.id },
+      where: { id: params.id },
       data: updateData,
     });
 
@@ -73,11 +86,15 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  context: { params: { id: string } }
+  { params }: RouteContext
 ) {
+  if (!params?.id) {
+    return NextResponse.json({ error: 'Task ID is required' }, { status: 400 });
+  }
+
   try {
     await prisma.task.delete({
-      where: { id: context.params.id },
+      where: { id: params.id },
     });
 
     return NextResponse.json({ message: 'Task deleted successfully' });

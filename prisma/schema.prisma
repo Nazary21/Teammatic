@@ -10,14 +10,41 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Task {
-  id          String      @id @default(cuid())
-  title       String
+model Project {
+  id          String       @id @default(cuid())
+  name        String
   description String?
-  status      String      @default("TODO")
-  priority    String      @default("MEDIUM")
-  dueDate     DateTime?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  metadata    Json?       // For custom fields
+  collections Collection[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Collection {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks       Task[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  order       Float    @default(0)
+
+  @@index([projectId])
+}
+
+model Task {
+  id           String      @id @default(cuid())
+  title        String
+  description  String?
+  status       String      @default("TODO")
+  priority     String      @default("MEDIUM")
+  dueDate      DateTime?
+  collectionId String?
+  collection   Collection? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  metadata     String?     // For custom fields (stored as JSON string)
+
+  @@index([collectionId])
 }

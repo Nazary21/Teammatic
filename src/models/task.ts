@@ -34,6 +34,7 @@ export class Task {
       dueDate: json.dueDate ? new Date(json.dueDate) : undefined,
       createdAt: new Date(json.createdAt),
       updatedAt: new Date(json.updatedAt),
+      metadata: json.metadata ? JSON.parse(json.metadata) : undefined,
     });
   }
 
@@ -47,7 +48,7 @@ export class Task {
       dueDate: this.dueDate?.toISOString(),
       createdAt: this.createdAt.toISOString(),
       updatedAt: this.updatedAt.toISOString(),
-      metadata: this.metadata,
+      metadata: this.metadata ? JSON.stringify(this.metadata) : undefined,
     };
   }
 
